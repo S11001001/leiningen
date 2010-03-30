@@ -1,7 +1,8 @@
 (ns leiningen.classpath
   (:use (clojure.contrib [java-utils :only (file)]
                          [seq-utils :only (flatten)]
-                         [str-utils :only (str-join)]))
+                         [str-utils :only (str-join)])
+        [leiningen.core :only (read-project)])
   (:import org.apache.tools.ant.types.Path))
 
 (defn find-lib-jars
@@ -9,6 +10,14 @@
   [project]
   (filter #(.endsWith (.getName %) ".jar")
           (file-seq (file (:library-path project)))))
+
+(defn checkout-deps-paths [project]
+  (apply concat (for [dep (.listFiles (file (:root project) "checkouts"))]
+                  ;; Note that this resets the leiningen.core/project var!
+                  (let [proj (read-project (.getAbsolutePath
+                                            (file dep "project.clj")))]
+                      (for [d [:source-path :compile-path :resources-path]]
+                        (proj d))))))
 
 (defn make-path
   "Constructs an ant Path object from Files and strings."
@@ -25,6 +34,7 @@
             (:test-path project)
             (:compile-path project)
             (:resources-path project)
+            (checkout-deps-paths project)
             (find-lib-jars project)]))
 
 (defn classpath

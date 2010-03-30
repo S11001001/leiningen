@@ -40,6 +40,12 @@
 
 ;; TODO: prompt to run "new" if no project file is found
 (defn read-project
+  ([file inferior?]
+     (if inferior?
+       (let [oproject project]
+         (try (read-project file)
+              (finally (alter-var-root #'project (constantly oproject)))))
+       (read-project file)))
   ([file]
      (try
       (load-file file)

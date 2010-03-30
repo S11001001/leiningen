@@ -13,9 +13,9 @@
 
 (defn checkout-deps-paths [project]
   (apply concat (for [dep (.listFiles (file (:root project) "checkouts"))]
-                  ;; Note that this resets the leiningen.core/project var!
                   (let [proj (read-project (.getAbsolutePath
-                                            (file dep "project.clj")))]
+                                            (file dep "project.clj"))
+                                           true)]
                       (for [d [:source-path :compile-path :resources-path]]
                         (proj d))))))
 

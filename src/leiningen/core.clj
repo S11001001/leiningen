@@ -1,5 +1,4 @@
 (ns leiningen.core
-  (:use [clojure.contrib.with-ns])
   (:import [java.io File])
   (:gen-class))
 

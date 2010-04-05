@@ -1,5 +1,4 @@
 (ns leiningen.core
-  (:use [clojure.contrib.with-ns])
   (:import [java.io File])
   (:gen-class))
 
@@ -31,9 +30,6 @@
                                   :root root#))))
      (def ~(symbol (name project-name)) project)))
 
-;; So it doesn't need to be fully-qualified in project.clj
-(with-ns 'clojure.core (use ['leiningen.core :only ['defproject]]))
-
 (defn abort [msg]
   (println msg)
   (System/exit 1))
@@ -48,7 +44,14 @@
        (read-project file)))
   ([file]
      (try
-      (load-file file)
+      ;; captured lexicals don't live in with-temp-ns's body
+      (let [loadspace (gensym)]
+        (create-ns loadspace)
+        (try (binding [*ns* (the-ns loadspace)]
+               (refer-clojure)
+               (refer 'leiningen.core :only '[defproject])
+               (load-file file))
+             (finally (remove-ns loadspace))))
       project
       (catch java.io.FileNotFoundException _
         (abort "No project.clj found in this directory."))))
